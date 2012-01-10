@@ -1,0 +1,341 @@
+(def tails (fn [seq]
+		(map drop
+			(range (inc (count seq)))
+			(replicate (inc (count seq) seq))
+		)
+	)
+)
+
+
+
+
+(def point {:x 1, :y 2})
+
+(def Point
+     (fn [x y]
+       {:x x, :y y}))
+
+(def shifted
+     (fn [this xinc yinc]
+       (Point (+ (:x this) xinc)
+              (+ (:y this) yinc))))
+
+(def Triangle
+     (fn [point1 point2 point3]
+       {:point1 point1, :point2 point2, :point3 point3}))
+
+(def add
+	(fn [this point]
+		(Point (+ (:x this) (:x point))
+			(+ (:y this) (:y point))
+		)
+	)
+)
+
+(def add
+	(fn [this point]
+		(shifted this (:x point) (:y point))
+	)
+)
+
+
+(def a
+	(fn [func & args]
+		(apply func args)
+	)
+)
+
+(a Point 1 2)
+(a Triangle (a Point 1 2) (a Point 2 3) (a Point 3 4))
+		
+(< (count (set [1 1])) (count [1 1]))
+ 
+
+
+
+(def duplicate-points?
+	(fn [& points]
+		(< (count (set points))
+		(count points))
+	)
+)
+
+(def Triangle
+	(fn [point1 point2 point3]
+		(if (duplicate-points? point1 point2 point3)
+			(throw (new Error "Oops"))
+	       		({:point1 point1, :point2 point2, :point3 point3})
+		)
+	)
+)
+
+
+
+###########################################3
+(def odd-point {
+	:x 1
+	:y 2
+	:methods 'Point
+	:string (fn [this] "1-2")
+}) 
+
+(dispatch :string point)
+
+(dispatch :string odd-point)
+
+
+
+##Modificacion ejercicio 1
+
+(def dispatch
+     (fn [keyword & args]
+       (let [instance (first args)
+		function (
+			  cond (keyword instance)
+			       (keyword instance)
+
+			       (:methods instance)
+			       (find-delegate keyword (:methods instance))
+
+				(:more-methods instance)
+				(find-delegate keyword (:more-methods instance))
+			)
+	    ]
+        (apply function args)
+	)
+      )
+)
+
+######### 2º ejercicio
+(dispatch :new Point 5 3)
+(dispatch :origin Point)
+
+(def MetaPoint {
+	   :new (fn [this x y] {:x x, :y y, :methods (:name this)})
+	   :origin (fn [this] (dispatch :new this 0 0))
+	}
+)
+
+(def Point {
+   :name 'Point
+   :origin-area (fn [this] (* (:x this) (:y this)))
+   :methods 'MetaPoint
+   :more-methods 'LastMethods
+})
+
+	
+#################### 4º
+
+(extend-Point Flippable)
+(dispatch :origin-flip point)
+
+(def extend-Point
+	(fn [module]
+		(def Point (merge Point module))
+	)
+)
+
+
+########################### set
+(def map-concat
+	(fn [lista]
+		(map (partial + 2) lista)
+	)
+)
+
+
+(def myfun
+	((fn [x] 
+		(fn [] x))
+	33
+	)
+)
+
+
+(def always
+	(fn [x]
+		(fn [& args] x)
+	)
+)
+
+
+
+################## Set 5
+
+(def Point
+     (fn [x y]
+       (let [functions {:shifted
+                        (fn [xinc yinc]
+                          (Point (+ x xinc)
+                                 (+ y yinc)))
+                        :x (fn [] x)
+                        :y (fn [] y)
+                        :string (fn [] (str [x y]))}]
+         (fn [keyword & args]
+           (apply (keyword functions) args)))))
+
+
+
+(def Rectangle
+	(fn [punto height width]
+		(let [functions {:area
+					(fn []
+						(* height width)
+					)
+				 :origin
+					(fn []
+						punto
+					)
+				 :top-right
+					(fn []
+						(punto :shifted height width)
+					) 
+				}
+			]
+			(fn [keyword & args]
+           		(apply (keyword functions) args))
+		)
+	)
+)
+
+
+######################### set 6
+
+(def selector 
+	(fn [seq]
+		(cond (sequential? seq)
+			:sequential	
+			
+		      (string? seq)
+			:string
+			
+		      :else
+			:object	
+		)
+	)
+)
+
+(defmulti add selector)
+
+(defmethod add :sequential [seq]
+	(fn [document]
+		(concat document seq)
+	)
+)
+
+(defmethod add :string [seq]
+	(fn [document]
+		(concat document (words seq))
+	)
+)
+
+(defmethod add :object [seq]
+	(add [seq])
+)
+
+(def edit 
+	(fn [new-seq]
+		(fn [document]
+			((add new-seq) (take (dec (count document)) document))
+		)
+	)
+)
+
+(def changes [
+	(add 1) 
+	(add "two words") 
+	(edit "three") 
+	(add [4 5])
+	]
+)
+
+
+(def make-changes
+     (fn [changes document]
+       (let [all-changes (apply comp (reverse changes))]
+         (all-changes document)
+	)
+     )
+)
+
+
+(def new-tail
+	(fn [map key value]
+		{key (concat (key map) value)}
+		
+	)
+)
+########## 4
+
+(def drop-tail
+	(fn [map key index]
+		(key (take (- (count (key map)) index) (key map)))
+	)
+)
+
+(def flip-last
+	(fn [map key new-value]
+		(key (take (- (count (key map)) 1) (key map)))
+	)
+)
+
+############### set 7
+;; 1
+(def integers (iterate inc 0))
+
+(def imap
+	(fn [function coll]
+		(map function integers coll)
+	)
+)
+
+;;2 
+
+(def factorial
+	(fn [number]
+		(apply * (map inc  (range number)))
+	)
+)
+
+;;3
+(def factorials
+	(map factorial integers)
+)
+
+(nth 20 factorials)
+
+
+######################## set 8
+;; 1
+(first ys-and-ns)
+
+(def ys-and-ns
+	(filter 
+		(fn [response]
+			(or (.startsWith response "y") (.startsWith response "n"))
+		)
+	inputs-starting-now)
+)
+
+
+;; 2
+
+(def inputs-number
+	(filter number-string? inputs-starting-now) 
+)
+
+(def counted-sum
+	(fn []
+		(let
+			[number-count (to-integer (first inputs-number))]
+			(apply +
+				(map to-integer (take
+							number-count
+							(drop 1 inputs-number)
+						)
+				)
+			)
+		)	
+	)
+)
+
